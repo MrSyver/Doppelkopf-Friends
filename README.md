@@ -1,0 +1,2 @@
+# Doppelkopf-Friends
+doppelkopf app
