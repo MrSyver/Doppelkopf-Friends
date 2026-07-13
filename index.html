@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Doppelkopf-Friends</title>
+  <meta name="description" content="Doppelkopf Punkte-Zähler mit Solo, Bockrunde und Auswertung." />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0f5132" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Doppelkopf" />
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <h1>Doppelkopf<span class="accent">-Friends</span></h1>
+  </header>
+
+  <main id="views">
+    <!-- ============ SPIELER ============ -->
+    <section class="view" id="view-players" data-view="players">
+      <h2>Spieler</h2>
+      <form id="add-player-form" class="row-form" autocomplete="off">
+        <input type="text" id="player-name-input" placeholder="Name eingeben…" maxlength="24" required />
+        <button type="submit" class="btn primary">Hinzufügen</button>
+      </form>
+      <ul id="player-list" class="player-list"></ul>
+      <p id="players-empty" class="empty-hint">Noch keine Spieler angelegt.</p>
+    </section>
+
+    <!-- ============ ERFASSUNG ============ -->
+    <section class="view" id="view-round" data-view="round" hidden>
+      <h2>Runde erfassen</h2>
+
+      <div id="bock-banner" class="bock-banner" hidden></div>
+
+      <div class="round-controls">
+        <label class="value-field">
+          <span>Punktwert</span>
+          <div class="stepper">
+            <button type="button" class="btn step" id="value-minus" aria-label="weniger">−</button>
+            <input type="number" id="round-value" value="1" min="1" step="1" inputmode="numeric" />
+            <button type="button" class="btn step" id="value-plus" aria-label="mehr">+</button>
+          </div>
+        </label>
+        <button type="button" class="btn bock" id="start-bock">🐏 Bockrunde starten</button>
+      </div>
+
+      <p class="hint">Auf Namen tippen: 1× = <span class="chip won">Gewonnen</span> · 2× = <span class="chip lost">Verloren</span> · 3× = neutral</p>
+      <div id="player-toggle-grid" class="toggle-grid"></div>
+      <p id="round-players-empty" class="empty-hint">Lege zuerst im Tab „Spieler" Spieler an.</p>
+
+      <div id="solo-picker" class="solo-picker" hidden>
+        <span class="solo-label">Solo:</span>
+        <div id="solo-options" class="solo-options"></div>
+      </div>
+
+      <div class="round-actions">
+        <button type="button" class="btn primary big" id="save-round" disabled>Runde speichern</button>
+      </div>
+
+      <h3>Verlauf</h3>
+      <div id="rounds-table-wrap" class="table-wrap">
+        <table id="rounds-table" class="rounds-table"></table>
+      </div>
+      <p id="rounds-empty" class="empty-hint">Noch keine Runden erfasst.</p>
+    </section>
+
+    <!-- ============ AUSWERTUNG ============ -->
+    <section class="view" id="view-stats" data-view="stats" hidden>
+      <h2>Auswertung</h2>
+      <div id="chart-wrap" class="chart-wrap"></div>
+      <div id="chart-legend" class="chart-legend"></div>
+      <div id="stats-table-wrap" class="table-wrap"></div>
+      <p id="stats-empty" class="empty-hint">Noch keine Daten zum Auswerten.</p>
+    </section>
+
+    <!-- ============ DATEN ============ -->
+    <section class="view" id="view-data" data-view="data" hidden>
+      <h2>Daten</h2>
+      <p class="hint">Deine Daten liegen lokal auf diesem Gerät. Zum Sichern oder Übertragen exportierst du eine Datei und importierst sie auf einem anderen Gerät. Beim Import kannst du <strong>mehrere Dateien gleichzeitig</strong> wählen – sie werden <strong>angehängt</strong>, Spieler mit gleichem Namen zusammengeführt.</p>
+      <div class="data-actions">
+        <button type="button" class="btn primary" id="export-btn">⬇︎ Exportieren</button>
+        <button type="button" class="btn" id="import-btn">⬆︎ Importieren</button>
+        <input type="file" id="import-file" accept="application/json,.json" multiple hidden />
+      </div>
+      <div id="import-history"></div>
+      <div class="danger-zone">
+        <button type="button" class="btn danger" id="reset-btn">Alles zurücksetzen</button>
+      </div>
+      <p class="version-note" id="version-note"></p>
+    </section>
+  </main>
+
+  <!-- Bock-Modal -->
+  <div class="modal" id="bock-modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="bock-modal-title">
+      <h3 id="bock-modal-title">🐏 Bockrunde starten</h3>
+      <label class="modal-field">
+        <span>Über wie viele Runden?</span>
+        <input type="number" id="bock-count" min="1" step="1" value="4" inputmode="numeric" />
+      </label>
+      <div class="bock-overlap" id="bock-overlap" hidden>
+        <p class="overlap-hint">Es läuft bereits eine Bockrunde – wie kombinieren?</p>
+        <label class="radio-row">
+          <input type="radio" name="bockmode" value="append" checked />
+          <span><strong>Anhängen</strong> – nacheinander, bleibt ×2</span>
+        </label>
+        <label class="radio-row">
+          <input type="radio" name="bockmode" value="double" />
+          <span><strong>Doppelbock</strong> – überschneiden, ×4 in den gemeinsamen Runden</span>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="bock-cancel">Abbrechen</button>
+        <button type="button" class="btn primary" id="bock-confirm">Starten</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabbar" id="tabbar">
+    <button class="tab active" data-target="players"><span class="tab-ico">👤</span><span>Spieler</span></button>
+    <button class="tab" data-target="round"><span class="tab-ico">📝</span><span>Erfassung</span></button>
+    <button class="tab" data-target="stats"><span class="tab-ico">📈</span><span>Auswertung</span></button>
+    <button class="tab" data-target="data"><span class="tab-ico">💾</span><span>Daten</span></button>
+  </nav>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
