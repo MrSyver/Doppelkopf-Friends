@@ -1,21 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#28c98f"/>
-      <stop offset="1" stop-color="#0e9160"/>
-    </linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <rect width="512" height="512" rx="112" fill="#0b0d0c"/>
   <!-- hintere Karte -->
-  <g transform="rotate(-14 256 300)">
-    <rect x="150" y="150" width="150" height="210" rx="18" fill="#f4f1e8" stroke="#d9d2bd" stroke-width="3"/>
-    <text x="225" y="285" font-family="Georgia, serif" font-size="120" fill="#0f5132" text-anchor="middle" font-weight="bold">♣</text>
+  <g transform="rotate(-13 256 288)">
+    <rect x="150" y="140" width="150" height="210" rx="16" fill="#ffffff"/>
+    <text x="225" y="278" font-family="Georgia, serif" font-size="120" fill="#0b0d0c" text-anchor="middle" font-weight="bold">♠</text>
   </g>
   <!-- vordere Karte -->
-  <g transform="rotate(12 256 300)">
-    <rect x="212" y="150" width="150" height="210" rx="18" fill="#ffffff" stroke="#e2ddd0" stroke-width="3"/>
-    <text x="287" y="285" font-family="Georgia, serif" font-size="120" fill="#b02a37" text-anchor="middle" font-weight="bold">♥</text>
+  <g transform="rotate(12 256 288)">
+    <rect x="212" y="140" width="150" height="210" rx="16" fill="#ffffff"/>
+    <text x="287" y="278" font-family="Georgia, serif" font-size="120" fill="#86bc25" text-anchor="middle" font-weight="bold">♣</text>
   </g>
-  <!-- Krone (Doppelkopf-Anspielung) -->
-  <path d="M176 118 l24 34 30 -46 30 46 30 -46 30 46 24 -34 -14 66 h-140 z" fill="#c9a227"/>
+  <!-- Deloitte-Punkt -->
+  <circle cx="404" cy="404" r="34" fill="#86bc25"/>
 </svg>
