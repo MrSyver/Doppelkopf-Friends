@@ -17,8 +17,28 @@
   --radius: 14px;
   --tabbar-h: 62px;
 }
+/* Dunkle Palette – als wiederverwendbarer Wertesatz.
+   Gilt automatisch bei System-Dark (außer der Nutzer erzwingt Hell)
+   und immer, wenn manuell data-theme="dark" gesetzt ist. */
+:root[data-theme="dark"] {
+  --bg: #141a17;
+  --surface: #1c2420;
+  --surface-2: #26302b;
+  --text: #e9f1ec;
+  --text-dim: #9fb0a7;
+  --border: #313d37;
+  --green: #37c08a;
+  --green-strong: #2ba676;
+  --green-soft: #17362a;
+  --red: #f2848a;
+  --red-soft: #3a1c1f;
+  --accent: #ecc06a;
+  --accent-soft: #3a2f16;
+  --header-text: #f3fbf7;
+  --shadow: 0 1px 3px rgba(0,0,0,.35);
+}
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #141a17;
     --surface: #1c2420;
     --surface-2: #26302b;
@@ -78,7 +98,10 @@ main { padding: 16px; max-width: 720px; margin: 0 auto; }
   background: var(--accent-soft); border-color: transparent; color: #9a6a12;
   font-size: .9rem; padding: 8px 12px; box-shadow: none;
 }
-@media (prefers-color-scheme: dark) { .btn.ghost { color: var(--accent); } }
+:root[data-theme="dark"] .btn.ghost { color: var(--accent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .btn.ghost { color: var(--accent); } }
+/* Bock als kompakter Icon-Button */
+.btn.bock { font-size: 1.3rem; line-height: 1; padding: 9px 13px; border-radius: 12px; }
 .btn.big { width: 100%; padding: 14px; font-size: 1.05rem; font-weight: 600; }
 .btn.primary:disabled { opacity: .45; cursor: not-allowed; }
 .btn.step { padding: 10px 16px; font-size: 1.2rem; line-height: 1; }
@@ -185,7 +208,7 @@ td.neg { color: var(--red); font-weight: 600; }
 /* Tabbar */
 .tabbar {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 20;
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   background: var(--surface); border-top: 1px solid var(--border);
   padding-bottom: env(safe-area-inset-bottom);
   height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
@@ -193,8 +216,9 @@ td.neg { color: var(--red); font-weight: 600; }
 .tab {
   border: none; background: none; color: var(--text-dim); cursor: pointer;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-  font-size: .72rem; padding: 6px 0;
+  font-size: .66rem; padding: 6px 0; min-width: 0;
 }
+.tab span:not(.tab-ico) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tab .tab-ico { font-size: 1.25rem; line-height: 1; }
 .tab.active { color: var(--green); font-weight: 600; }
 
@@ -212,6 +236,30 @@ td.neg { color: var(--red); font-weight: 600; }
 
 .danger-zone { margin-top: 28px; padding-top: 16px; border-top: 1px dashed var(--border); }
 .version-note { color: var(--text-dim); font-size: .8rem; margin-top: 24px; text-align: center; }
+
+/* Einstellungen */
+.setting-block { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; box-shadow: var(--shadow); }
+.setting-label { font-weight: 600; display: block; margin-bottom: 10px; }
+.segmented { display: flex; gap: 4px; background: var(--surface-2); border-radius: 12px; padding: 4px; }
+.segmented .seg {
+  flex: 1; border: none; background: none; color: var(--text-dim); cursor: pointer;
+  padding: 10px 8px; border-radius: 9px; font: inherit; font-size: .92rem; font-weight: 600;
+}
+.segmented .seg.active { background: var(--surface); color: var(--green); box-shadow: var(--shadow); }
+
+/* Kennzahlen-Karten */
+.stat-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 14px 0; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); }
+.stat-card .sc-val { font-size: 1.35rem; font-weight: 700; line-height: 1.15; }
+.stat-card .sc-label { font-size: .78rem; color: var(--text-dim); margin-top: 2px; }
+.stat-card .sc-sub { font-size: .78rem; color: var(--text-dim); margin-top: 2px; }
+.stat-card.wide { grid-column: 1 / -1; }
+.solo-break { margin: 6px 4px 0; color: var(--text-dim); font-size: .88rem; }
+.solo-break .sb-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 18px; height: 18px; padding: 0 4px; border-radius: 5px;
+  font-size: .72rem; font-weight: 700; color: #fff; margin: 0 2px 0 8px;
+}
 
 /* Modal */
 .modal {
