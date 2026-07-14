@@ -1,6 +1,6 @@
 // Service Worker – App-Shell cachen für Offline-Betrieb.
 // Cache-Version bei Änderungen erhöhen, damit Clients aktualisieren.
-const CACHE = 'doko-v6';
+const CACHE = 'doko-v7';
 const ASSETS = [
   './',
   './index.html',
@@ -31,22 +31,22 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Cache-first mit Netzwerk-Fallback; neue Antworten nachlegen.
+// Network-first: online immer die aktuelle Version, offline aus dem Cache.
+// Verhindert, dass eine veraltete gecachte Version „kleben" bleibt.
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   if (req.method !== 'GET') return;
   event.respondWith(
-    caches.match(req).then((cached) => {
-      if (cached) return cached;
-      return fetch(req)
-        .then((res) => {
-          if (res && res.ok && res.type === 'basic') {
-            const copy = res.clone();
-            caches.open(CACHE).then((c) => c.put(req, copy));
-          }
-          return res;
-        })
-        .catch(() => cached);
-    })
+    fetch(req)
+      .then((res) => {
+        if (res && res.ok && res.type === 'basic') {
+          const copy = res.clone();
+          caches.open(CACHE).then((c) => c.put(req, copy));
+        }
+        return res;
+      })
+      .catch(() =>
+        caches.match(req).then((cached) => cached || (req.mode === 'navigate' ? caches.match('./index.html') : undefined))
+      )
   );
 });
