@@ -2,11 +2,11 @@
 import {
   loadState, saveState, defaultState, makeId, exportState,
   readImportFile, mergeImport,
-  SOLO_TYPES, soloById, STATE_VERSION,
+  SOLO_TYPES, soloById, STATE_VERSION, THEMES,
 } from './storage.js';
 import {
   roundPoints, totals, cumulativeSeries, isRoundValid, soloAllowed,
-  fmt, playerStats,
+  fmt, playerStats, overallStats,
 } from './scoring.js';
 import { renderChart, renderLegend, colorFor } from './charts.js';
 import {
@@ -42,6 +42,30 @@ function showView(target) {
   if (target === 'stats') renderStats();
   if (target === 'round') renderRoundTab();
   if (target === 'data') renderData();
+  if (target === 'settings') renderSettings();
+}
+
+// ---------- Theme ----------
+function applyTheme() {
+  const theme = (state.settings && state.settings.theme) || 'system';
+  if (theme === 'light' || theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', theme);
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+}
+
+function setTheme(theme) {
+  if (!THEMES.includes(theme)) return;
+  state.settings.theme = theme;
+  persist();
+  applyTheme();
+  renderSettings();
+}
+
+function renderSettings() {
+  const cur = (state.settings && state.settings.theme) || 'system';
+  $$('#theme-switch .seg').forEach((b) => b.classList.toggle('active', b.dataset.themeValue === cur));
 }
 
 // ---------- Spieler-Tab ----------
@@ -258,8 +282,18 @@ function renderRoundsTable() {
   state.players.forEach((p) => { head += `<th>${escapeHtml(p.name)}</th>`; });
   head += '<th>Info</th><th></th></tr></thead>';
 
-  let body = '<tbody>';
-  state.rounds.forEach((round, i) => {
+  // Summenzeile ganz oben.
+  let body = '<tbody><tr class="total-row"><td class="rlabel">Σ</td>';
+  state.players.forEach((p) => {
+    const v = tot[p.id] || 0;
+    const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+    body += `<td class="${cls}">${fmt(v)}</td>`;
+  });
+  body += '<td></td><td></td></tr>';
+
+  // Runden absteigend: neueste zuerst (Rundennummer bleibt chronologisch).
+  for (let i = state.rounds.length - 1; i >= 0; i--) {
+    const round = state.rounds[i];
     const pts = roundPoints(round, state.settings);
     body += `<tr><td class="rlabel">${i + 1}</td>`;
     state.players.forEach((p) => {
@@ -273,18 +307,10 @@ function renderRoundsTable() {
     });
     body += `<td>${roundBadges(round)}</td>`;
     body += `<td><button class="del-round" title="Runde löschen" data-id="${round.id}">✕</button></td></tr>`;
-  });
+  }
   body += '</tbody>';
 
-  let foot = '<tfoot><tr class="total-row"><td class="rlabel">Σ</td>';
-  state.players.forEach((p) => {
-    const v = tot[p.id] || 0;
-    const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : '';
-    foot += `<td class="${cls}">${fmt(v)}</td>`;
-  });
-  foot += '<td></td><td></td></tr></tfoot>';
-
-  table.innerHTML = head + body + foot;
+  table.innerHTML = head + body;
   $$('.del-round', table).forEach((b) => b.addEventListener('click', () => deleteRound(b.dataset.id)));
 }
 
@@ -327,8 +353,12 @@ function renderStats() {
   const tableWrap = $('#stats-table-wrap');
   const empty = $('#stats-empty');
 
+  const cards = $('#stats-cards');
+  const breakdown = $('#solo-breakdown');
   if (state.rounds.length === 0 || state.players.length === 0) {
     chartWrap.innerHTML = ''; legend.innerHTML = ''; tableWrap.innerHTML = '';
+    if (cards) cards.innerHTML = '';
+    if (breakdown) breakdown.innerHTML = '';
     empty.hidden = false;
     return;
   }
@@ -339,26 +369,51 @@ function renderStats() {
   legend.innerHTML = renderLegend(state.players);
 
   const stats = playerStats(state);
-  const bockCount = state.rounds.filter((r) => r.bock).length;
-  const soloCount = state.rounds.filter((r) => r.solo).length;
+  const ov = overallStats(state);
 
-  // Nach Punkten sortierte Rangliste.
+  // Kennzahlen-Karten
+  const bestTxt = ov.bestRound
+    ? `${fmt(ov.bestRound.value)} <span class="sc-sub">${escapeHtml(ov.bestRound.name)} · Runde ${ov.bestRound.roundIndex}</span>`
+    : '–';
+  const leaderTxt = ov.leader ? `${escapeHtml(ov.leader.name)} <span class="sc-sub">${fmt(ov.leader.value)}</span>` : '–';
+  cards.innerHTML =
+      card(String(ov.rounds), 'Runden gesamt')
+    + card(String(ov.soloTotal), 'Soli gespielt')
+    + card(String(ov.bockRounds), 'Bockrunden')
+    + card(leaderTxt, 'In Führung')
+    + `<div class="stat-card wide"><div class="sc-val">${bestTxt}</div><div class="sc-label">Beste Einzelrunde</div></div>`;
+
+  // Solo-Aufschlüsselung nach Typ
+  const soloParts = SOLO_TYPES
+    .filter((t) => ov.soloByType[t.id])
+    .map((t) => `<span class="sb-badge" style="background:${t.color}">${t.short}</span>${t.name}: ${ov.soloByType[t.id]}`);
+  breakdown.innerHTML = soloParts.length
+    ? `<p class="solo-break">Soli nach Typ:${soloParts.join(' · ')}</p>`
+    : '';
+
+  // Rangliste mit zusätzlichen Kennzahlen
   const ranked = [...state.players].sort((a, b) => (stats[b.id].total) - (stats[a.id].total));
-
   let html = '<table class="rounds-table"><thead><tr>'
-    + '<th class="rlabel">Spieler</th><th>Punkte</th><th>Siege</th><th>Nied.</th><th>Solos</th>'
+    + '<th class="rlabel">Spieler</th><th>Punkte</th><th>Siege</th><th>Nied.</th><th>Solos</th><th>Beste</th><th>Schl.</th>'
     + '</tr></thead><tbody>';
   ranked.forEach((p) => {
     const s = stats[p.id];
     const cls = s.total > 0 ? 'pos' : s.total < 0 ? 'neg' : '';
     const soloTxt = s.solosPlayed ? `${s.solosWon}/${s.solosPlayed}` : '–';
+    const bestC = s.best > 0 ? 'pos' : s.best < 0 ? 'neg' : '';
+    const worstC = s.worst > 0 ? 'pos' : s.worst < 0 ? 'neg' : '';
     html += `<tr><td class="rlabel">${escapeHtml(p.name)}</td>`
-      + `<td class="${cls}">${fmt(s.total)}</td><td>${s.wins}</td><td>${s.losses}</td><td>${soloTxt}</td></tr>`;
+      + `<td class="${cls}">${fmt(s.total)}</td><td>${s.wins}</td><td>${s.losses}</td><td>${soloTxt}</td>`
+      + `<td class="${bestC}">${s.best === null ? '–' : fmt(s.best)}</td>`
+      + `<td class="${worstC}">${s.worst === null ? '–' : fmt(s.worst)}</td></tr>`;
   });
   html += '</tbody></table>';
-  html += `<p class="hint" style="padding:10px 4px">Runden gesamt: ${state.rounds.length} · Bockrunden: ${bockCount} · Solos: ${soloCount}</p>`;
   tableWrap.innerHTML = html;
   tableWrap.style.border = 'none';
+}
+
+function card(val, label) {
+  return `<div class="stat-card"><div class="sc-val">${val}</div><div class="sc-label">${label}</div></div>`;
 }
 
 // ---------- Daten-Tab ----------
@@ -408,6 +463,7 @@ function doImport(files) {
       state = merged;
       draft = { results: {}, solo: null };
       persist();
+      applyTheme();
       renderAll();
       renderData();
       toast(`${list.length} ${plural} importiert · ${addedRounds} Runde(n) angehängt.`);
@@ -420,6 +476,7 @@ function doReset() {
   state = defaultState();
   draft = { results: {}, solo: null };
   persist();
+  applyTheme();
   renderAll();
   toast('Alles zurückgesetzt.');
 }
@@ -473,6 +530,11 @@ function bindEvents() {
     e.target.value = '';
   });
   $('#reset-btn').addEventListener('click', doReset);
+
+  $('#theme-switch').addEventListener('click', (e) => {
+    const seg = e.target.closest('.seg');
+    if (seg) setTheme(seg.dataset.themeValue);
+  });
 }
 
 // ---------- Service Worker ----------
@@ -485,6 +547,7 @@ function registerSW() {
 }
 
 // ---------- Start ----------
+applyTheme();
 bindEvents();
 renderAll();
 showView('players');

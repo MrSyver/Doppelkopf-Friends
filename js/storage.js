@@ -23,9 +23,11 @@ export function defaultState() {
     rounds: [],
     bockSchedule: [], // Zeitplan überlappender Bockrunden (siehe bock.js)
     imports: [],      // Historie: { at, source, players, rounds }
-    settings: { bockFactor: 2 },
+    settings: { bockFactor: 2, theme: 'system' },
   };
 }
+
+export const THEMES = ['system', 'light', 'dark'];
 
 // Namen normalisieren, um gleiche Spieler zu erkennen (Groß/Klein + Leerzeichen).
 export function normName(name) {
@@ -89,7 +91,10 @@ export function normalizeState(raw) {
     rounds,
     bockSchedule: normalizeSchedule(raw),
     imports,
-    settings: { bockFactor: bockBase },
+    settings: {
+      bockFactor: bockBase,
+      theme: THEMES.includes(raw.settings && raw.settings.theme) ? raw.settings.theme : 'system',
+    },
   };
 }
 

@@ -8,7 +8,7 @@
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="theme-color" content="#0f5132" />
+  <meta name="theme-color" content="#12a870" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -17,6 +17,14 @@
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
 
   <link rel="stylesheet" href="css/styles.css" />
+  <script>
+    // Theme früh anwenden, damit es beim Start nicht kurz aufblitzt.
+    try {
+      var s = JSON.parse(localStorage.getItem('doko-state') || '{}');
+      var t = s && s.settings && s.settings.theme;
+      if (t === 'dark' || t === 'light') document.documentElement.setAttribute('data-theme', t);
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <header class="app-header">
@@ -50,7 +58,7 @@
             <button type="button" class="btn step" id="value-plus" aria-label="mehr">+</button>
           </div>
         </label>
-        <button type="button" class="btn bock" id="start-bock">🐏 Bockrunde starten</button>
+        <button type="button" class="btn ghost bock" id="start-bock" aria-label="Bockrunde starten" title="Bockrunde starten">🐏</button>
       </div>
 
       <p class="hint">Auf Namen tippen: 1× = <span class="chip won">Gewonnen</span> · 2× = <span class="chip lost">Verloren</span> · 3× = neutral</p>
@@ -78,7 +86,9 @@
       <h2>Auswertung</h2>
       <div id="chart-wrap" class="chart-wrap"></div>
       <div id="chart-legend" class="chart-legend"></div>
+      <div id="stats-cards" class="stat-cards"></div>
       <div id="stats-table-wrap" class="table-wrap"></div>
+      <div id="solo-breakdown"></div>
       <p id="stats-empty" class="empty-hint">Noch keine Daten zum Auswerten.</p>
     </section>
 
@@ -96,6 +106,20 @@
         <button type="button" class="btn danger" id="reset-btn">Alles zurücksetzen</button>
       </div>
       <p class="version-note" id="version-note"></p>
+    </section>
+
+    <!-- ============ EINSTELLUNGEN ============ -->
+    <section class="view" id="view-settings" data-view="settings" hidden>
+      <h2>Einstellungen</h2>
+      <div class="setting-block">
+        <span class="setting-label">Erscheinungsbild</span>
+        <div class="segmented" id="theme-switch" role="group" aria-label="Farbschema">
+          <button type="button" class="seg" data-theme-value="system">System</button>
+          <button type="button" class="seg" data-theme-value="light">☀︎ Hell</button>
+          <button type="button" class="seg" data-theme-value="dark">☾ Dunkel</button>
+        </div>
+        <p class="hint">„System" folgt der Einstellung deines Geräts.</p>
+      </div>
     </section>
   </main>
 
@@ -130,6 +154,7 @@
     <button class="tab" data-target="round"><span class="tab-ico">📝</span><span>Erfassung</span></button>
     <button class="tab" data-target="stats"><span class="tab-ico">📈</span><span>Auswertung</span></button>
     <button class="tab" data-target="data"><span class="tab-ico">💾</span><span>Daten</span></button>
+    <button class="tab" data-target="settings"><span class="tab-ico">⚙️</span><span>Optionen</span></button>
   </nav>
 
   <script type="module" src="js/app.js"></script>
