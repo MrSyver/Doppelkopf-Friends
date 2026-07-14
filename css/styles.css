@@ -163,7 +163,7 @@ table { border-collapse: collapse; width: 100%; font-size: .92rem; background: v
 th, td { padding: 8px 10px; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--border); }
 th { background: var(--surface-2); font-weight: 600; position: sticky; top: 0; }
 td.rlabel, th.rlabel { text-align: left; }
-tr.total-row td { font-weight: 700; border-top: 2px solid var(--border); background: var(--surface-2); }
+tr.total-row td { font-weight: 700; background: var(--surface-2); border-bottom: 2px solid var(--border); }
 td.pos { color: var(--green); font-weight: 600; }
 td.neg { color: var(--red); font-weight: 600; }
 .rbadges { display: inline-flex; gap: 4px; align-items: center; }

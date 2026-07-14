@@ -1,6 +1,6 @@
 // Service Worker – App-Shell cachen für Offline-Betrieb.
 // Cache-Version bei Änderungen erhöhen, damit Clients aktualisieren.
-const CACHE = 'doko-v4';
+const CACHE = 'doko-v5';
 const ASSETS = [
   './',
   './index.html',

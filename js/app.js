@@ -258,8 +258,18 @@ function renderRoundsTable() {
   state.players.forEach((p) => { head += `<th>${escapeHtml(p.name)}</th>`; });
   head += '<th>Info</th><th></th></tr></thead>';
 
-  let body = '<tbody>';
-  state.rounds.forEach((round, i) => {
+  // Summenzeile ganz oben.
+  let body = '<tbody><tr class="total-row"><td class="rlabel">Σ</td>';
+  state.players.forEach((p) => {
+    const v = tot[p.id] || 0;
+    const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+    body += `<td class="${cls}">${fmt(v)}</td>`;
+  });
+  body += '<td></td><td></td></tr>';
+
+  // Runden absteigend: neueste zuerst (Rundennummer bleibt chronologisch).
+  for (let i = state.rounds.length - 1; i >= 0; i--) {
+    const round = state.rounds[i];
     const pts = roundPoints(round, state.settings);
     body += `<tr><td class="rlabel">${i + 1}</td>`;
     state.players.forEach((p) => {
@@ -273,18 +283,10 @@ function renderRoundsTable() {
     });
     body += `<td>${roundBadges(round)}</td>`;
     body += `<td><button class="del-round" title="Runde löschen" data-id="${round.id}">✕</button></td></tr>`;
-  });
+  }
   body += '</tbody>';
 
-  let foot = '<tfoot><tr class="total-row"><td class="rlabel">Σ</td>';
-  state.players.forEach((p) => {
-    const v = tot[p.id] || 0;
-    const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : '';
-    foot += `<td class="${cls}">${fmt(v)}</td>`;
-  });
-  foot += '<td></td><td></td></tr></tfoot>';
-
-  table.innerHTML = head + body + foot;
+  table.innerHTML = head + body;
   $$('.del-round', table).forEach((b) => b.addEventListener('click', () => deleteRound(b.dataset.id)));
 }
 
